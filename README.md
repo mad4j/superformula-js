@@ -37,7 +37,8 @@ By varying these six parameters the formula can model shapes found in nature (fl
 
 Open `index.html` directly in any modern browser — no build step or server required.  
 Use the sliders at the bottom of the page to adjust each parameter in real time.  
-The **Stroke** and **Fill** colour pickers let you customise the appearance; the **Filled** toggle switches between outline-only and filled rendering.
+The **Stroke** and **Fill** colour pickers let you customise the appearance; the **Filled** toggle switches between outline-only and filled rendering.  
+Click the **RAND** button to instantly randomize all six parameters and discover unexpected shapes.
 
 ## References
 
