@@ -702,7 +702,7 @@
       const mxInput = document.getElementById('sl-mx');
       const myInput = document.getElementById('sl-my');
 
-      // Always randomize a, b, n1, n2, n3
+      // Randomize a, b, n1, n2, n3
       sliders.filter(({ id }) => id !== 'sl-mx' && id !== 'sl-my')
         .forEach(({ id, val, fmt }) => {
           const input = document.getElementById(id);
@@ -711,31 +711,16 @@
           updateTrackFill(input);
         });
 
-      // Randomly choose: m-mode (mx = my = m) or mx/my-mode (set independently)
-      if (Math.random() < 0.5) {
-        // m-mode: sync mx and my to the same random m value
-        mInput.value = randStep(+mInput.min, +mInput.max, +mInput.step);
-        document.getElementById('val-m').textContent  = String(mInput.value);
-        updateTrackFill(mInput);
-        mxInput.value = mInput.value;
-        document.getElementById('val-mx').textContent = String(mxInput.value);
-        updateTrackFill(mxInput);
-        myInput.value = mInput.value;
-        document.getElementById('val-my').textContent = String(myInput.value);
-        updateTrackFill(myInput);
-      } else {
-        // mx/my-mode: set mx and my to independent random values
-        mxInput.value = randStep(+mxInput.min, +mxInput.max, +mxInput.step);
-        document.getElementById('val-mx').textContent = String(mxInput.value);
-        updateTrackFill(mxInput);
-        myInput.value = randStep(+myInput.min, +myInput.max, +myInput.step);
-        document.getElementById('val-my').textContent = String(myInput.value);
-        updateTrackFill(myInput);
-        // Keep m slider in sync with mx so it's a sensible starting point
-        mInput.value = mxInput.value;
-        document.getElementById('val-m').textContent = String(mInput.value);
-        updateTrackFill(mInput);
-      }
+      // Always use m-mode: pick a random m and sync mx = my = m
+      mInput.value = randStep(+mInput.min, +mInput.max, +mInput.step);
+      document.getElementById('val-m').textContent  = String(mInput.value);
+      updateTrackFill(mInput);
+      mxInput.value = mInput.value;
+      document.getElementById('val-mx').textContent = String(mxInput.value);
+      updateTrackFill(mxInput);
+      myInput.value = mInput.value;
+      document.getElementById('val-my').textContent = String(myInput.value);
+      updateTrackFill(myInput);
 
       draw();
     }
