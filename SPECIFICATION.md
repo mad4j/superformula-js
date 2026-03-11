@@ -25,7 +25,8 @@
 10. [Responsiveness](#10-responsiveness)
 11. [Accessibility](#11-accessibility)
 12. [Visual Style](#12-visual-style)
-13. [Requirements Index](#13-requirements-index)
+13. [Saved Configurations Gallery](#13-saved-configurations-gallery)
+14. [Requirements Index](#14-requirements-index)
 
 ---
 
@@ -351,7 +352,37 @@ on hover, and `#1d4ed8` on active.
 
 ---
 
-## 13. Requirements Index
+## 13. Saved Configurations Gallery
+
+### 13.1 Overview
+
+**REQ-058** A "SAVE" button MUST be present in the extras row, positioned to the right of the
+*Filled* toggle and to the left of the RAND button.
+
+**REQ-059** Clicking the SAVE button MUST capture the complete current state — all eight parameter
+values (`m`, `mx`, `my`, `a`, `b`, `n₁`, `n₂`, `n₃`), stroke colour, fill colour, and the
+*Filled* toggle state — and prepend it to an in-memory gallery array.
+
+**REQ-060** The gallery MUST retain at most **5** saved configurations. When a sixth item is saved,
+the oldest entry MUST be discarded.
+
+### 13.2 Gallery Display
+
+**REQ-061** A gallery row MUST be rendered inside the `#controls` panel, below the extras row.
+When the gallery is empty the row MUST be hidden; it MUST become visible as soon as the first
+configuration is saved.
+
+**REQ-062** Each saved configuration MUST be represented by a square thumbnail button (48 × 48 CSS
+pixels). The thumbnail MUST display the superformula curve for that configuration, rendered with
+the saved stroke colour, fill colour, and *Filled* state, on the background colour `#f8fafc`.
+
+**REQ-063** Clicking a gallery thumbnail MUST restore all saved parameter values and colour
+settings to the interactive controls and trigger a full redraw of the main canvas, exactly as if
+the user had set those controls manually.
+
+---
+
+## 14. Requirements Index
 
 | ID | Section | Summary |
 |----|---------|---------|
@@ -412,6 +443,12 @@ on hover, and `#1d4ed8` on active.
 | REQ-055 | §12 | `overflow: hidden` on html/body |
 | REQ-056 | §12 | Custom slider styling |
 | REQ-057 | §12 | RAND button colour states |
+| REQ-058 | §13 | SAVE button in extras row |
+| REQ-059 | §13 | Capture and store current configuration on save |
+| REQ-060 | §13 | Gallery retains at most 5 configurations |
+| REQ-061 | §13 | Gallery row hidden when empty, visible when populated |
+| REQ-062 | §13 | Thumbnail renders saved curve at 48 × 48 CSS pixels |
+| REQ-063 | §13 | Clicking thumbnail restores configuration and redraws |
 
 ---
 

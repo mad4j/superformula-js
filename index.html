@@ -317,12 +317,83 @@
       line-height: 0;
     }
 
-    /* Randomise button */
-    #rand-btn {
+    /* Gallery */
+    .gallery-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .gallery-row:empty {
+      display: none;
+    }
+
+    .gallery-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .gallery-item {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      overflow: hidden;
+      cursor: pointer;
+      background: #f8fafc;
+      padding: 0;
+      transition: border-color 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .gallery-item:hover {
+      border-color: var(--accent);
+      transform: scale(1.08);
+    }
+
+    .gallery-item canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* SAVE button */
+    #save-btn {
       display: flex;
       align-items: center;
       gap: 5px;
       margin-left: auto;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 5px 12px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    #save-btn:hover {
+      background: rgba(37, 99, 235, 0.08);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    #save-btn:active {
+      background: rgba(37, 99, 235, 0.15);
+    }
+
+    /* Randomise button — sits to the right of #save-btn, which carries margin-left:auto */
+    #rand-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
       background: var(--accent);
       border: none;
       border-radius: 6px;
@@ -429,10 +500,15 @@
         <input type="checkbox" id="fill-toggle" checked />
         Filled
       </label>
+      <button id="save-btn" aria-label="Save current configuration">
+        SAVE
+      </button>
       <button id="rand-btn" aria-label="Randomise parameters">
         &#x2684; RAND
       </button>
     </div>
+
+    <div class="gallery-row" id="gallery-row" role="list" aria-label="Saved configurations"></div>
   </div>
 
   <script>
@@ -720,6 +796,130 @@
     }
 
     document.getElementById('rand-btn').addEventListener('click', randomize);
+
+    /* ── Gallery ── */
+    const MAX_GALLERY = 5;
+    const THUMB_SIZE  = 96;   // physical pixels for thumbnail canvas
+    const gallery     = [];
+
+    function captureConfig() {
+      return {
+        m:          +document.getElementById('sl-m').value,
+        mx:         +document.getElementById('sl-mx').value,
+        my:         +document.getElementById('sl-my').value,
+        a:          +document.getElementById('sl-a').value,
+        b:          +document.getElementById('sl-b').value,
+        n1:         +document.getElementById('sl-n1').value,
+        n2:         +document.getElementById('sl-n2').value,
+        n3:         +document.getElementById('sl-n3').value,
+        strokeColor,
+        fillColor,
+        filled:     document.getElementById('fill-toggle').checked,
+      };
+    }
+
+    function renderThumbnail(thumbCanvas, config) {
+      const sz = thumbCanvas.width;
+      const tc = thumbCanvas.getContext('2d', { alpha: false });
+      tc.fillStyle = '#f8fafc';
+      tc.fillRect(0, 0, sz, sz);
+
+      const radius = sz * 0.44;
+      const cx = sz / 2;
+      const cy = sz / 2;
+
+      let maxR = 0;
+      for (let i = 0; i <= STEPS; i++) {
+        const theta = (2 * Math.PI * i) / STEPS;
+        const r = superformula(theta, config.mx, config.my, config.a, config.b, config.n1, config.n2, config.n3);
+        if (r > maxR) maxR = r;
+      }
+      if (maxR === 0) return;
+      const scale = radius / maxR;
+
+      tc.beginPath();
+      for (let i = 0; i <= STEPS; i++) {
+        const theta = (2 * Math.PI * i) / STEPS;
+        const r = superformula(theta, config.mx, config.my, config.a, config.b, config.n1, config.n2, config.n3) * scale;
+        const x = cx + r * Math.cos(theta);
+        const y = cy + r * Math.sin(theta);
+        i === 0 ? tc.moveTo(x, y) : tc.lineTo(x, y);
+      }
+      tc.closePath();
+
+      if (config.filled) {
+        tc.fillStyle = config.fillColor;
+        tc.fill();
+      }
+      tc.strokeStyle = config.strokeColor;
+      tc.lineWidth   = Math.max(1, sz * 0.025);
+      tc.lineJoin    = 'round';
+      tc.stroke();
+    }
+
+    function restoreConfig(config) {
+      sliders.forEach(({ id, val, fmt }) => {
+        const key   = id.replace('sl-', '');
+        const input = document.getElementById(id);
+        input.value = config[key];
+        document.getElementById(val).textContent = fmt(input.value);
+        updateTrackFill(input);
+      });
+
+      const mInput = document.getElementById('sl-m');
+      mInput.value = config.m;
+      document.getElementById('val-m').textContent = String(config.m);
+      updateTrackFill(mInput);
+
+      strokeColor = config.strokeColor;
+      fillColor   = config.fillColor;
+      document.getElementById('stroke-swatch').style.background = strokeColor;
+      document.getElementById('fill-swatch').style.background   = fillColor;
+
+      document.querySelectorAll('#stroke-palette .palette-swatch').forEach(s => {
+        const sel = s.title === strokeColor;
+        s.classList.toggle('selected', sel);
+        s.setAttribute('aria-selected', sel ? 'true' : 'false');
+      });
+      document.querySelectorAll('#fill-palette .palette-swatch').forEach(s => {
+        const sel = s.title === fillColor;
+        s.classList.toggle('selected', sel);
+        s.setAttribute('aria-selected', sel ? 'true' : 'false');
+      });
+
+      document.getElementById('fill-toggle').checked = config.filled;
+      draw();
+    }
+
+    function updateGallery() {
+      const row = document.getElementById('gallery-row');
+      row.innerHTML = '';
+      gallery.forEach((config, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'gallery-item';
+        btn.setAttribute('role', 'listitem');
+        btn.setAttribute('aria-label', `Restore saved configuration ${idx + 1}`);
+        btn.setAttribute('title', `Configuration ${idx + 1}`);
+
+        const thumbCanvas = document.createElement('canvas');
+        thumbCanvas.width  = THUMB_SIZE;
+        thumbCanvas.height = THUMB_SIZE;
+        renderThumbnail(thumbCanvas, config);
+        btn.appendChild(thumbCanvas);
+
+        btn.addEventListener('click', () => restoreConfig(config));
+        row.appendChild(btn);
+      });
+    }
+
+    function saveConfig() {
+      gallery.unshift(captureConfig());
+      if (gallery.length > MAX_GALLERY) gallery.pop();
+      updateGallery();
+      resize();
+    }
+
+    document.getElementById('save-btn').addEventListener('click', saveConfig);
 
     /* ── Collapse panel ── */
     const controls  = document.getElementById('controls');
