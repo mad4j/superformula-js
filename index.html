@@ -311,6 +311,18 @@
       transform: translateX(14px);
     }
 
+    /* Master m slider — subtle left border to indicate it syncs mₓ / mᵧ */
+    .slider-group-master {
+      border-left: 2px solid var(--accent);
+      padding-left: 6px;
+    }
+
+    .slider-label sub {
+      font-size: 9px;
+      vertical-align: sub;
+      line-height: 0;
+    }
+
     /* Randomise button */
     #rand-btn {
       display: flex;
@@ -354,11 +366,23 @@
     </button>
 
     <div class="sliders-grid">
-      <div class="slider-group">
+      <div class="slider-group slider-group-master" title="Sets both mₓ and mᵧ to the same value">
         <div class="slider-label">
           <span>m</span><span class="val" id="val-m">6</span>
         </div>
         <input type="range" id="sl-m"  min="1" max="20" step="1"   value="6"  />
+      </div>
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>m<sub>x</sub></span><span class="val" id="val-mx">6</span>
+        </div>
+        <input type="range" id="sl-mx" min="1" max="20" step="1"   value="6"  />
+      </div>
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>m<sub>y</sub></span><span class="val" id="val-my">6</span>
+        </div>
+        <input type="range" id="sl-my" min="1" max="20" step="1"   value="6"  />
       </div>
       <div class="slider-group">
         <div class="slider-label">
@@ -448,11 +472,10 @@
       draw();
     }
 
-    /* ── Superformula ── */
-    function superformula(theta, m, a, b, n1, n2, n3) {
-      const t  = m * theta / 4;
-      const c  = Math.abs(Math.cos(t)  / a);
-      const s  = Math.abs(Math.sin(t)  / b);
+    /* ── Superformula (extended: separate mx, my frequencies) ── */
+    function superformula(theta, mx, my, a, b, n1, n2, n3) {
+      const c  = Math.abs(Math.cos(mx * theta / 4) / a);
+      const s  = Math.abs(Math.sin(my * theta / 4) / b);
       const v  = Math.pow(c, n2) + Math.pow(s, n3);
       if (v === 0) return 0;
       return Math.pow(v, -1 / n1);
@@ -463,7 +486,8 @@
 
     function getParams() {
       return {
-        m : +document.getElementById('sl-m').value,
+        mx: +document.getElementById('sl-mx').value,
+        my: +document.getElementById('sl-my').value,
         a : +document.getElementById('sl-a').value,
         b : +document.getElementById('sl-b').value,
         n1: +document.getElementById('sl-n1').value,
@@ -489,7 +513,7 @@
       let maxR = 0;
       for (let i = 0; i <= STEPS; i++) {
         const theta = (2 * Math.PI * i) / STEPS;
-        const r     = superformula(theta, p.m, p.a, p.b, p.n1, p.n2, p.n3);
+        const r     = superformula(theta, p.mx, p.my, p.a, p.b, p.n1, p.n2, p.n3);
         if (r > maxR) maxR = r;
       }
       if (maxR === 0) return;
@@ -499,7 +523,7 @@
       ctx.beginPath();
       for (let i = 0; i <= STEPS; i++) {
         const theta = (2 * Math.PI * i) / STEPS;
-        const r     = superformula(theta, p.m, p.a, p.b, p.n1, p.n2, p.n3) * scale;
+        const r     = superformula(theta, p.mx, p.my, p.a, p.b, p.n1, p.n2, p.n3) * scale;
         const x     = cx + r * Math.cos(theta);
         const y     = cy + r * Math.sin(theta);
         i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
@@ -543,8 +567,11 @@
     }
 
     /* ── Slider wiring ── */
+
+    // Independent sliders (mx, my act individually; a, b, n1-n3 are always independent)
     const sliders = [
-      { id: 'sl-m',  val: 'val-m',  fmt: v => String(v) },
+      { id: 'sl-mx', val: 'val-mx', fmt: v => String(v) },
+      { id: 'sl-my', val: 'val-my', fmt: v => String(v) },
       { id: 'sl-a',  val: 'val-a',  fmt: v => (+v).toFixed(2) },
       { id: 'sl-b',  val: 'val-b',  fmt: v => (+v).toFixed(2) },
       { id: 'sl-n1', val: 'val-n1', fmt: v => (+v).toFixed(2) },
@@ -570,6 +597,26 @@
         draw();
       });
     });
+
+    // m slider: master control — moves mx and my in sync
+    {
+      const mInput  = document.getElementById('sl-m');
+      const mxInput = document.getElementById('sl-mx');
+      const myInput = document.getElementById('sl-my');
+      updateTrackFill(mInput);
+      mInput.addEventListener('input', () => {
+        const v = mInput.value;
+        document.getElementById('val-m').textContent = v;
+        updateTrackFill(mInput);
+        mxInput.value = v;
+        document.getElementById('val-mx').textContent = v;
+        updateTrackFill(mxInput);
+        myInput.value = v;
+        document.getElementById('val-my').textContent = v;
+        updateTrackFill(myInput);
+        draw();
+      });
+    }
 
     /* ── Colour controls ── */
     let strokeColor = '#1e40af';
@@ -651,12 +698,30 @@
     }
 
     function randomize() {
-      sliders.forEach(({ id, val, fmt }) => {
-        const input = document.getElementById(id);
-        input.value = randStep(+input.min, +input.max, +input.step);
-        document.getElementById(val).textContent = fmt(input.value);
-        updateTrackFill(input);
-      });
+      const mInput  = document.getElementById('sl-m');
+      const mxInput = document.getElementById('sl-mx');
+      const myInput = document.getElementById('sl-my');
+
+      // Randomize a, b, n1, n2, n3
+      sliders.filter(({ id }) => id !== 'sl-mx' && id !== 'sl-my')
+        .forEach(({ id, val, fmt }) => {
+          const input = document.getElementById(id);
+          input.value = randStep(+input.min, +input.max, +input.step);
+          document.getElementById(val).textContent = fmt(input.value);
+          updateTrackFill(input);
+        });
+
+      // Always use m-mode: pick a random m and sync mx = my = m
+      mInput.value = randStep(+mInput.min, +mInput.max, +mInput.step);
+      document.getElementById('val-m').textContent  = String(mInput.value);
+      updateTrackFill(mInput);
+      mxInput.value = mInput.value;
+      document.getElementById('val-mx').textContent = String(mxInput.value);
+      updateTrackFill(mxInput);
+      myInput.value = mInput.value;
+      document.getElementById('val-my').textContent = String(myInput.value);
+      updateTrackFill(myInput);
+
       draw();
     }
 
