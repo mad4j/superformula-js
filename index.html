@@ -274,6 +274,32 @@
     .fill-toggle input[type="checkbox"]:checked::after {
       transform: translateX(14px);
     }
+
+    /* Randomise button */
+    #rand-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 5px 12px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s ease;
+    }
+
+    #rand-btn:hover {
+      background: var(--accent-light);
+    }
+
+    #rand-btn:active {
+      background: #1d4ed8;
+    }
   </style>
 </head>
 <body>
@@ -344,6 +370,9 @@
         <input type="checkbox" id="fill-toggle" checked />
         Filled
       </label>
+      <button id="rand-btn" aria-label="Randomise parameters">
+        &#x2684; RAND
+      </button>
     </div>
   </div>
 
@@ -521,6 +550,27 @@
     bindColorBtn('fill-color-btn',   'fill-color-input',   'fill-swatch',   c => fillColor   = c);
 
     document.getElementById('fill-toggle').addEventListener('change', draw);
+
+    /* ── Randomise ── */
+    function randStep(min, max, step) {
+      const steps = Math.floor((max - min) / step);
+      const val   = min + Math.round(Math.random() * steps) * step;
+      // Round to avoid floating-point drift (use step's decimal places)
+      const decimals = step < 1 ? Math.max(0, -Math.floor(Math.log10(step))) : 0;
+      return +val.toFixed(decimals);
+    }
+
+    function randomize() {
+      sliders.forEach(({ id, val, fmt }) => {
+        const input = document.getElementById(id);
+        input.value = randStep(+input.min, +input.max, +input.step);
+        document.getElementById(val).textContent = fmt(input.value);
+        updateTrackFill(input);
+      });
+      draw();
+    }
+
+    document.getElementById('rand-btn').addEventListener('click', randomize);
 
     /* ── Collapse panel ── */
     const controls  = document.getElementById('controls');
