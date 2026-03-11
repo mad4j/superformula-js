@@ -222,12 +222,48 @@
       pointer-events: none;
     }
 
-    input[type="color"] {
+    .color-picker-wrap {
+      position: relative;
+    }
+
+    .color-palette {
       position: absolute;
-      opacity: 0;
-      pointer-events: none;
-      width: 0;
-      height: 0;
+      bottom: calc(100% + 6px);
+      left: 0;
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 5px;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .color-palette.hidden {
+      display: none;
+    }
+
+    .palette-swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.15);
+      cursor: pointer;
+      transition: transform 0.1s;
+      padding: 0;
+    }
+
+    .palette-swatch:hover {
+      transform: scale(1.2);
+      border-color: rgba(0,0,0,0.3);
+    }
+
+    .palette-swatch.selected {
+      box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--accent);
     }
 
     .fill-toggle {
@@ -357,16 +393,20 @@
     </div>
 
     <div class="extras-row">
-      <button class="color-btn" id="stroke-color-btn" aria-label="Stroke colour">
-        <span class="color-swatch" id="stroke-swatch" style="background:#1e40af"></span>
-        Stroke
-        <input type="color" id="stroke-color-input" value="#1e40af" />
-      </button>
-      <button class="color-btn" id="fill-color-btn" aria-label="Fill colour">
-        <span class="color-swatch" id="fill-swatch" style="background:#bfdbfe"></span>
-        Fill
-        <input type="color" id="fill-color-input" value="#bfdbfe" />
-      </button>
+      <div class="color-picker-wrap">
+        <button class="color-btn" id="stroke-color-btn" aria-label="Stroke colour" aria-haspopup="true" aria-expanded="false">
+          <span class="color-swatch" id="stroke-swatch" style="background:#1e40af"></span>
+          Stroke
+        </button>
+        <div class="color-palette hidden" id="stroke-palette" role="listbox" aria-label="Stroke colour palette"></div>
+      </div>
+      <div class="color-picker-wrap">
+        <button class="color-btn" id="fill-color-btn" aria-label="Fill colour" aria-haspopup="true" aria-expanded="false">
+          <span class="color-swatch" id="fill-swatch" style="background:#bfdbfe"></span>
+          Fill
+        </button>
+        <div class="color-palette hidden" id="fill-palette" role="listbox" aria-label="Fill colour palette"></div>
+      </div>
       <label class="fill-toggle">
         <input type="checkbox" id="fill-toggle" checked />
         Filled
@@ -535,20 +575,69 @@
     let strokeColor = '#1e40af';
     let fillColor   = '#bfdbfe';
 
-    function bindColorBtn(btnId, inputId, swatchId, setter) {
-      const btn   = document.getElementById(btnId);
-      const input = document.getElementById(inputId);
-      const swatch = document.getElementById(swatchId);
-      btn.addEventListener('click', () => input.click());
-      input.addEventListener('input', () => {
-        setter(input.value);
-        swatch.style.background = input.value;
-        draw();
+    // Desaturated palette: 6 dark tones (row 1) + 6 light tones (row 2)
+    const PALETTE = [
+      '#0f172a', '#1e3a5f', '#1e40af', '#374151', '#1c1917', '#164e63',
+      '#bfdbfe', '#e0e7ff', '#e2e8f0', '#d1fae5', '#fef9c3', '#fce7f3',
+    ];
+
+    function buildColorPicker(btnId, paletteId, swatchId, getter, setter) {
+      const btn     = document.getElementById(btnId);
+      const palette = document.getElementById(paletteId);
+      const swatch  = document.getElementById(swatchId);
+
+      PALETTE.forEach(color => {
+        const sw = document.createElement('button');
+        sw.className = 'palette-swatch';
+        sw.style.background = color;
+        sw.title = color;
+        sw.setAttribute('aria-label', color);
+        sw.setAttribute('role', 'option');
+        const isSelected = color === getter();
+        sw.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+        if (isSelected) sw.classList.add('selected');
+        sw.addEventListener('click', e => {
+          e.stopPropagation();
+          setter(color);
+          swatch.style.background = color;
+          palette.querySelectorAll('.palette-swatch').forEach(s => {
+            s.classList.remove('selected');
+            s.setAttribute('aria-selected', 'false');
+          });
+          sw.classList.add('selected');
+          sw.setAttribute('aria-selected', 'true');
+          palette.classList.add('hidden');
+          btn.setAttribute('aria-expanded', 'false');
+          btn.focus();
+          draw();
+        });
+        palette.appendChild(sw);
+      });
+
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        // Close any other open palette
+        document.querySelectorAll('.color-palette').forEach(p => {
+          if (p !== palette) p.classList.add('hidden');
+        });
+        document.querySelectorAll('.color-btn').forEach(b => {
+          if (b !== btn) b.setAttribute('aria-expanded', 'false');
+        });
+        palette.classList.toggle('hidden');
+        btn.setAttribute('aria-expanded', palette.classList.contains('hidden') ? 'false' : 'true');
       });
     }
 
-    bindColorBtn('stroke-color-btn', 'stroke-color-input', 'stroke-swatch', c => strokeColor = c);
-    bindColorBtn('fill-color-btn',   'fill-color-input',   'fill-swatch',   c => fillColor   = c);
+    buildColorPicker('stroke-color-btn', 'stroke-palette', 'stroke-swatch',
+      () => strokeColor, c => { strokeColor = c; });
+    buildColorPicker('fill-color-btn', 'fill-palette', 'fill-swatch',
+      () => fillColor, c => { fillColor = c; });
+
+    // Close palettes when clicking outside
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.color-palette').forEach(p => p.classList.add('hidden'));
+      document.querySelectorAll('.color-btn').forEach(b => b.setAttribute('aria-expanded', 'false'));
+    });
 
     document.getElementById('fill-toggle').addEventListener('change', draw);
 
