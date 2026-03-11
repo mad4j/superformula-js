@@ -10,7 +10,7 @@ An interactive browser-based visualization of the **Gielis Superformula** — a 
 
 The Superformula, introduced by Johan Gielis in 2003, is expressed in polar coordinates as:
 
-$$r(\varphi) = \left[ \left|\frac{\cos\!\left(\frac{m\,\varphi}{4}\right)}{a}\right|^{n_2} + \left|\frac{\sin\!\left(\frac{m\,\varphi}{4}\right)}{b}\right|^{n_3} \right]^{-\frac{1}{n_1}}$$
+$$r(\varphi) = \left[ \left|\frac{\cos\left(\frac{m\varphi}{4}\right)}{a}\right|^{n_2} + \left|\frac{\sin\left(\frac{m\varphi}{4}\right)}{b}\right|^{n_3} \right]^{-\frac{1}{n_1}}$$
 
 where $r$ is the radial distance for a given angle $\varphi \in [0, 2\pi)$.
 
