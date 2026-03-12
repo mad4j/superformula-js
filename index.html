@@ -321,6 +321,7 @@
     .gallery-row {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
       margin-top: 10px;
       overflow-x: auto;
@@ -362,12 +363,20 @@
       display: block;
     }
 
+    /* Action row (SAVE / RAND) placed just below the panel title */
+    .action-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
     /* SAVE button */
     #save-btn {
       display: flex;
       align-items: center;
       gap: 5px;
-      margin-left: auto;
       background: none;
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -431,6 +440,26 @@
         <path d="M1 1l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
+
+    <div class="action-row">
+      <button id="save-btn" aria-label="Save current configuration">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/>
+          <rect x="4" y="1" width="6" height="4" rx="0.5" fill="currentColor"/>
+          <rect x="3" y="7" width="8" height="5" rx="0.8" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+        SAVE
+      </button>
+      <button id="rand-btn" aria-label="Randomise parameters">
+        <svg width="14" height="11" viewBox="0 0 14 11" fill="none" aria-hidden="true">
+          <path d="M1 9 L13 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M1 2 L13 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M11 2 L13 2 L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M13 7 L13 9 L11 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        RAND
+      </button>
+    </div>
 
     <div class="sliders-grid">
       <div class="slider-group slider-group-master" title="Sets both mₓ and mᵧ to the same value">
@@ -502,23 +531,6 @@
         <input type="checkbox" id="fill-toggle" checked />
         Filled
       </label>
-      <button id="save-btn" aria-label="Save current configuration">
-        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/>
-          <rect x="4" y="1" width="6" height="4" rx="0.5" fill="currentColor"/>
-          <rect x="3" y="7" width="8" height="5" rx="0.8" stroke="currentColor" stroke-width="1.4"/>
-        </svg>
-        SAVE
-      </button>
-      <button id="rand-btn" aria-label="Randomise parameters">
-        <svg width="14" height="11" viewBox="0 0 14 11" fill="none" aria-hidden="true">
-          <path d="M1 9 L13 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          <path d="M1 2 L13 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-          <path d="M11 2 L13 2 L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M13 7 L13 9 L11 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        RAND
-      </button>
     </div>
 
     <div class="gallery-row" id="gallery-row" role="list" aria-label="Saved configurations"></div>
